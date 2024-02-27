@@ -9,7 +9,7 @@ import './styles/index.css'
 ReactDOM.createRoot(document.getElementById('root') as Element)
   .render(
   <React.StrictMode>
-    <App />
+      <App />
   </React.StrictMode>
   )
 /* eslint-enable-next-line @typescript-eslint/no-non-null-assertion   */

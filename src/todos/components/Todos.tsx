@@ -25,30 +25,35 @@ export const Todos: React.FC<Props> = ({ todos, onRemoveTodo, onToggleCompletedT
   const [parent] = useAutoAnimate()
   return (
     <ul className='todo-list' ref={ parent }>
-      {todos.map(todo => (
+      {todos.length > 0
+        ? todos.map(todo => (
         <li
-          key={todo.id}
-          onDoubleClick={() => { setIsEditing(todo.id) }}
+          key={todo._id}
+          onDoubleClick={() => { setIsEditing(todo._id) }}
           className={`
           ${todo.completed ? 'completed' : ''}
-          ${isEditing === todo.id ? 'editing' : ''}
+          ${isEditing === todo._id ? 'editing' : ''}
           `}
         >
           <Todo
-            key={todo.id}
-            id={todo.id}
+            key={todo._id}
+            _id={todo._id}
             title={todo.title}
             completed={todo.completed}
             onToggleCompletedTodo={onToggleCompletedTodo}
             onRemoveTodo={() => {
-              onRemoveTodo({ id: todo.id })
+              onRemoveTodo({ id: todo._id })
+                .then(res => res)
+                .catch(err => { console.log(err) })
             }}
             onUpdateTitle={onUpdateTitle}
-            isEditing={isEditing === todo.id}
+            isEditing={isEditing === todo._id}
             setIsEditing={setIsEditing}
           />
         </li>
-      ))}
+        ))
+        : <li><label>No hay nada que hacer aun!</label></li>
+    }
     </ul>
   )
 }

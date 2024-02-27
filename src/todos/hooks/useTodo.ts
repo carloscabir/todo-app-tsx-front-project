@@ -1,55 +1,57 @@
-import { useState } from 'react'
-import { TODO_FILTERS } from '../consts/todos'
-import { mockTodos } from '../mocks'
+import { useEffect, useState } from 'react'
+import { TODO_FILTERS, MAIN_ENDPOINT } from '../consts/todos'
 import {
-  type ListOfTodos,
+  type ListOfTodos as ListOfTodosType,
   type OnToggleCompletedTodo as ToggleCompletedTodoType,
   type RemoveTodo as RemoveTodoType,
   type EditTitle as EditTitleType,
   type FilterValue as FilterValueType,
   type AddTodo as AddTodoType,
-  type RemoveAllCompleted as RemoveAllCompletedType,
-  type HandlerFilterChange as HandlerFilterChangeType
+  type HandlerFilterChange as HandlerFilterChangeType,
+  type useTodos as useTodosType
 } from '../types/todos'
+import { useFetchAllTodos } from './useFetchTodos.mts'
+import {
+  fetchCreateTodo,
+  fetchDeleteAllCompletedTodos,
+  fetchDeleteTodo,
+  fetchToggleCompletedTodo,
+  fetchUpdateTitleTodo
+} from '../services/todos.mts'
 
-export const useTodos = (): {
-  todos: ListOfTodos
-  toggleCompletedTodo: ToggleCompletedTodoType
-  addTodo: AddTodoType
-  updateTitleTodo: EditTitleType
-  removeTodo: RemoveTodoType
-  removeAllCompleted: RemoveAllCompletedType
-  handlerFilterChange: HandlerFilterChangeType
-  filterSelected: FilterValueType
-  completedCount: number
-  activeCount: number
-} => {
-  const [todos, setTodos] = useState(mockTodos)
-
+export const useTodos: useTodosType = () => {
+  const [todos, setTodos] = useState<ListOfTodosType | []>([])
   const [filterSelected, setFilterSelected] = useState<FilterValueType>(TODO_FILTERS.ALL)
+  const [error, setError] = useState<string | null>(null)
+  const { todos: initialTodos, error: initialError } = useFetchAllTodos({ url: MAIN_ENDPOINT })
 
-  const filteredTodos = todos.filter(todo => {
-    if (filterSelected === TODO_FILTERS.ACTIVE) return !todo.completed
-    if (filterSelected === TODO_FILTERS.COMPLETED) return todo.completed
+  useEffect(() => {
+    if (initialTodos !== null && initialTodos?.length > 0) {
+      setTodos(initialTodos)
+    }
 
-    return todo
-  })
+    if (initialError != null) {
+      setError(initialError)
+    }
+  }, [initialTodos, initialError])
+
+  const filteredTodos =
+    todos.filter(todo => {
+      if (filterSelected === TODO_FILTERS.ACTIVE) return !todo.completed
+      if (filterSelected === TODO_FILTERS.COMPLETED) return todo.completed
+
+      return todo
+    })
 
   const handlerFilterChange: HandlerFilterChangeType = (filter) => { setFilterSelected(filter) }
 
-  /*
-  const handleCompleted = (
-    { id, completed }: Pick<TodoType, 'id' | 'completed'>
-    ): void => {
-    }
-    */
-  const toggleCompletedTodo: ToggleCompletedTodoType = ({ id, completed }) => {
+  const toggleCompletedTodo: ToggleCompletedTodoType = async ({ id, completed }) => {
+    const url = `${MAIN_ENDPOINT}/${id}`
+    await fetchToggleCompletedTodo({ completed, url })
+
     const newTodos = todos.map(todo => {
-      if (todo.id === id) {
-        return {
-          ...todo,
-          completed
-        }
+      if (todo._id === id) {
+        return { ...todo, completed: !todo.completed }
       }
 
       return todo
@@ -57,20 +59,23 @@ export const useTodos = (): {
     setTodos(newTodos)
   }
 
-  const addTodo: AddTodoType = ({ title }): void => {
-    const newTodo = {
-      id: crypto.randomUUID(),
-      title: title.trim(),
-      completed: false
+  const addTodo: AddTodoType = async ({ title }) => {
+    const { createdTodo, error } = await fetchCreateTodo({ title, url: MAIN_ENDPOINT })
+
+    if (createdTodo == null || error != null) {
+      setError('Error al crear el todo'); return
     }
 
-    const newtodos = [...todos, newTodo]
+    const newtodos = [...todos, createdTodo]
     setTodos(newtodos)
   }
 
-  const updateTitleTodo: EditTitleType = ({ id, title }) => {
+  const updateTitleTodo: EditTitleType = async ({ id, title }) => {
+    const url = `${MAIN_ENDPOINT}/${id}`
+    await fetchUpdateTitleTodo({ url, title })
+
     const newTodos = todos.map(todo => {
-      if (todo.id === id) {
+      if (todo._id === id) {
         return {
           ...todo,
           title
@@ -82,13 +87,19 @@ export const useTodos = (): {
     setTodos(newTodos)
   }
 
-  const removeTodo: RemoveTodoType = ({ id }) => {
-    const newTodos = todos.filter(todo => todo.id !== id)
+  const removeTodo: RemoveTodoType = async ({ id }) => {
+    const newTodos = todos.filter(todo => todo._id !== id)
     setTodos(newTodos)
+
+    const url = `${MAIN_ENDPOINT}/${id}`
+    await fetchDeleteTodo({ url })
   }
 
-  const removeAllCompleted = (): void => {
-    const newTodos = todos.filter(todo => !todo.completed)
+  const removeAllCompleted = async (): Promise<void> => {
+    const url = `${MAIN_ENDPOINT}?deleteAllCompleted=true`
+    await fetchDeleteAllCompletedTodos({ url })
+
+    const newTodos = todos?.filter(todo => !todo.completed)
     setTodos(newTodos)
   }
 
@@ -105,6 +116,7 @@ export const useTodos = (): {
     handlerFilterChange,
     filterSelected,
     completedCount,
-    activeCount
+    activeCount,
+    error
   }
 }

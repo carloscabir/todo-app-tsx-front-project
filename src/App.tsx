@@ -14,17 +14,19 @@ const App = (): JSX.Element => {
     completedCount,
     activeCount,
     addTodo,
-    filterSelected
+    filterSelected,
+    error
   } = useTodos()
 
   return (
+    <>
     <div className='todoapp'>
       <Header onAddTodo={addTodo} />
       <Todos
-        todos={todos}
-        onToggleCompletedTodo= { toggleCompletedTodo }
-        onRemoveTodo={ removeTodo }
-        onUpdateTitle={updateTitleTodo}
+          todos={todos}
+          onToggleCompletedTodo={toggleCompletedTodo}
+          onRemoveTodo={removeTodo}
+          onUpdateTitle={updateTitleTodo}
         />
       <Footer
         activeCount={activeCount}
@@ -32,8 +34,10 @@ const App = (): JSX.Element => {
         filterSelected={filterSelected}
         onClearCompleted={removeAllCompleted}
         handleFilterChange={handlerFilterChange}
-      />
-    </div>
+        />
+      </div>
+      { error != null ? <div className='error'>{ error }</div> : '' }
+      </>
   )
 }
 

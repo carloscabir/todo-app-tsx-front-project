@@ -18,3 +18,6 @@ export const FILTERS_BUTTONS = {
     href: `/?filter=${TODO_FILTERS.COMPLETED}`
   }
 } as const
+
+// Here your API endpoint
+export const MAIN_ENDPOINT = 'http://localhost:3000/api/v1/todos'

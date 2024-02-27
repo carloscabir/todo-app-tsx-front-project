@@ -19,8 +19,10 @@ interface Props extends TodoType {
 
 // type PropsWithoutId = Omit<Props, 'id'>
 
-export const Todo: React.FC<Props> = ({
-  id,
+type PropsWithoutTimestampAndVersion = Omit<Props, '__v' | 'timeStamp'>
+
+export const Todo: React.FC<PropsWithoutTimestampAndVersion> = ({
+  _id,
   title,
   completed,
   onToggleCompletedTodo,
@@ -34,7 +36,7 @@ export const Todo: React.FC<Props> = ({
 
   const handleChangeCheckbox = (e: React.ChangeEvent<HTMLInputElement>): void => {
     onToggleCompletedTodo({
-      id,
+      id: _id,
       completed: e.target.checked
     })
   }
@@ -43,7 +45,7 @@ export const Todo: React.FC<Props> = ({
     if (e.key === 'Enter') {
       setEditedTitle(title.trim())
 
-      if (editedTitle !== title) { onUpdateTitle({ id, title: editedTitle }) }
+      if (editedTitle !== title) { onUpdateTitle({ id: _id, title: editedTitle }) }
 
       if (editedTitle === '') onRemoveTodo()
       setIsEditing('')
